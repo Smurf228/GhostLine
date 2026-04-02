@@ -42,4 +42,24 @@ router.get('/:id/messages', async (req, res) => {
   }
 });
 
+// DELETE /api/channels/messages/:id — удалить сообщение
+router.delete('/messages/:id', async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.id);
+    if (!message) return res.status(404).json({ message: 'Message not found' });
+
+    const senderId = message.sender.toString();
+    const userId = req.body.userId;
+
+    if (senderId !== userId) {
+      return res.status(403).json({ message: 'Not your message' });
+    }
+
+    await message.deleteOne();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

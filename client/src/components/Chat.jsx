@@ -76,6 +76,18 @@ const Chat = ({ user, onLogout }) => {
     setActiveChannel(channel);
   };
 
+  const handleDelete = async (messageId) => {
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_SERVER_URL}/api/channels/messages/${messageId}`,
+        { data: { userId: user.id } }
+      );
+      setMessages((prev) => prev.filter((m) => m._id !== messageId));
+    } catch (err) {
+      console.error('Failed to delete message', err);
+    }
+  };
+
   return (
     <div className="chat-layout">
       <Sidebar
@@ -102,7 +114,7 @@ const Chat = ({ user, onLogout }) => {
               )}
             </div>
 
-            <Messages messages={messages} />
+            <Messages messages={messages} user={user} onDelete={handleDelete} />
             <ChatInput user={user} channelId={activeChannel._id} />
           </>
         ) : (

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import DecryptText from './DecryptText';
 
-const Messages = ({ messages }) => {
+const Messages = ({ messages, user, onDelete }) => {
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -26,6 +26,11 @@ const Messages = ({ messages }) => {
             {msg.isNew ? <DecryptText text={msg.text} /> : msg.text}
           </span>
           <span className="msg-time">{formatTime(msg.createdAt)}</span>
+          {msg.sender?._id === user?.id && (
+            <button className="msg-delete" onClick={() => onDelete(msg._id)} title="delete">
+              [x]
+            </button>
+          )}
         </div>
       ))}
       <div ref={bottomRef} />
