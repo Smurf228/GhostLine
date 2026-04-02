@@ -26,7 +26,7 @@ const Messages = ({ messages, user, onDelete }) => {
             {msg.isNew ? <DecryptText text={msg.text} /> : msg.text}
           </span>
           <span className="msg-time">{formatTime(msg.createdAt)}</span>
-          {msg.sender?._id === user?.id && (
+          {String(msg.sender?._id) === String(user?.id) && (
             <button className="msg-delete" onClick={() => onDelete(msg._id)} title="delete">
               [x]
             </button>
