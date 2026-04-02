@@ -22,6 +22,7 @@ const Messages = ({ messages, user, onDelete }) => {
         const senderId = String(msg.sender?._id);
         const userId = String(user?.id);
         const isOwn = senderId === userId;
+        if (i === 0) console.log('[GhostLine] senderId:', senderId, 'userId:', userId, 'isOwn:', isOwn);
         return (
         <div className="message" key={msg._id || i}>
           <span className="msg-prefix">&gt;</span>
