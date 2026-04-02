@@ -48,9 +48,12 @@ io.on('connection', (socket) => {
     const populated = await message.populate('sender', 'username');
 
     const messageData = {
-      _id: populated._id,
+      _id: populated._id.toString(),
       text: populated.text,
-      sender: populated.sender,
+      sender: {
+        _id: populated.sender._id.toString(),
+        username: populated.sender.username,
+      },
       channel: channelId,
       createdAt: populated.createdAt,
     };

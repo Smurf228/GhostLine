@@ -77,15 +77,14 @@ const Chat = ({ user, onLogout }) => {
   };
 
   const handleDelete = async (messageId) => {
-    console.log('Delete called, user:', user);
     try {
       await axios.delete(
         `${import.meta.env.VITE_SERVER_URL}/api/channels/messages/${messageId}`,
         { data: { userId: user.id } }
       );
-      setMessages((prev) => prev.filter((m) => m._id !== messageId));
+      setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
     } catch (err) {
-      console.error('Failed to delete message', err);
+      console.error('Failed to delete message:', err.response?.data?.message || err.message);
     }
   };
 

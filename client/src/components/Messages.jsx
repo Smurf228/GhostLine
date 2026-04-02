@@ -21,8 +21,7 @@ const Messages = ({ messages, user, onDelete }) => {
       {messages.map((msg, i) => {
         const senderId = String(msg.sender?._id);
         const userId = String(user?.id);
-        const isOwn = true; // temp: show for all
-        if (i === 0) console.log('MSG DEBUG:', { senderId, userId, sender: msg.sender });
+        const isOwn = senderId === userId;
         return (
         <div className="message" key={msg._id || i}>
           <span className="msg-prefix">&gt;</span>
