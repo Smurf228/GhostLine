@@ -1,0 +1,41 @@
+.app {
+  position: relative;
+  min-height: 100vh;
+  z-index: 1;
+}
+
+.welcome-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+.welcome-title {
+  font-size: 3rem;
+  color: var(--green);
+  text-shadow:
+    0 0 10px var(--green),
+    0 0 20px var(--green),
+    0 0 40px var(--green);
+  margin-bottom: 8px;
+  letter-spacing: 4px;
+}
+
+.welcome-subtitle {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 40px;
+}
+
+.welcome-prompt {
+  color: var(--cyan);
+  font-size: 1rem;
+}
+
+.welcome-prompt span {
+  color: var(--green);
+}
