@@ -77,6 +77,7 @@ const Chat = ({ user, onLogout }) => {
   };
 
   const handleDelete = async (messageId) => {
+    console.log('Delete called, user:', user);
     try {
       await axios.delete(
         `${import.meta.env.VITE_SERVER_URL}/api/channels/messages/${messageId}`,
