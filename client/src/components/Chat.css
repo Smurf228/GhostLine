@@ -159,8 +159,8 @@
   margin-bottom: 8px;
   font-size: 0.85rem;
   line-height: 1.5;
+  position: relative;
 }
-
 .message .msg-prefix {
   color: var(--text-dim);
   font-size: 0.65rem;
@@ -180,10 +180,6 @@
   color: var(--text-dim);
   font-size: 0.6rem;
   margin-left: 8px;
-}
-
-.message {
-  position: relative;
 }
 
 .message:hover .msg-delete {
