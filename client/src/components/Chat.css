@@ -182,12 +182,7 @@
   margin-left: 8px;
 }
 
-.message:hover .msg-delete {
-  opacity: 1;
-}
-
 .msg-delete {
-  opacity: 0;
   background: none;
   border: none;
   color: #ff4444;
@@ -195,13 +190,14 @@
   font-size: 0.65rem;
   cursor: pointer;
   margin-left: 8px;
-  transition: opacity 0.2s;
   padding: 0;
+  opacity: 0.4;
 }
 
 .msg-delete:hover {
   color: #ff0000;
   text-shadow: 0 0 6px #ff0000;
+  opacity: 1;
 }
 
 /* Input */
