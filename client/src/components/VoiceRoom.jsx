@@ -5,6 +5,21 @@ const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
   ]
 };
 
@@ -27,7 +42,9 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
     audio.autoplay = true;
     audio.style.display = 'none';
     document.body.appendChild(audio);
-    audio.play().catch(console.error);
+    audio.play()
+      .then(() => console.log('[Voice] audio playing for', socketId.slice(0,6)))
+      .catch(err => console.error('[Voice] audio play failed:', err));
     audioEls.current[socketId] = audio;
   };
 
@@ -42,13 +59,18 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
         if (candidate) socket.emit('voice_ice', { to: targetSocketId, candidate });
       };
 
+      pc.oniceconnectionstatechange = () => {
+        console.log(`[Voice] ICE ${targetSocketId.slice(0,6)}: ${pc.iceConnectionState}`);
+      };
+
+      pc.onconnectionstatechange = () => {
+        console.log(`[Voice] conn ${targetSocketId.slice(0,6)}: ${pc.connectionState}`);
+      };
+
       pc.ontrack = ({ track, streams }) => {
-        if (streams && streams[0]) {
-          addAudio(targetSocketId, streams[0]);
-        } else {
-          const ms = new MediaStream([track]);
-          addAudio(targetSocketId, ms);
-        }
+        console.log(`[Voice] ontrack from ${targetSocketId.slice(0,6)}, streams:`, streams?.length);
+        const stream = streams && streams[0] ? streams[0] : new MediaStream([track]);
+        addAudio(targetSocketId, stream);
       };
 
       return pc;
@@ -101,6 +123,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
       };
 
       const onOffer = async ({ from, offer }) => {
+        console.log('[Voice] voice_offer from', from.slice(0,6));
         let pc = peersRef.current[from];
         if (!pc) {
           pc = makePeer(from, stream);
@@ -112,6 +135,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           socket.emit('voice_answer', { to: from, answer: pc.localDescription });
+          console.log('[Voice] voice_answer sent to', from.slice(0,6));
         } catch (err) {
           console.error('voice_offer handling error:', err);
         }
