@@ -43,8 +43,24 @@ app.use('/api/channels', channelRoutes);
 channelRoutes.setIo(io);
 
 // Socket.io
+const onlineUsers = {}; // socketId -> { id, username, status }
+
 io.on('connection', (socket) => {
   console.log(`> User connected: ${socket.id}`);
+
+  // Пользователь регистрируется
+  socket.on('user_online', ({ id, username }) => {
+    onlineUsers[socket.id] = { id, username, status: 'ONLINE' };
+    io.emit('online_users', Object.values(onlineUsers));
+  });
+
+  // Смена статуса
+  socket.on('change_status', (status) => {
+    if (onlineUsers[socket.id]) {
+      onlineUsers[socket.id].status = status;
+      io.emit('online_users', Object.values(onlineUsers));
+    }
+  });
 
   // Пользователь заходит в канал
   socket.on('join_channel', (channelId) => {
@@ -89,6 +105,8 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log(`> User disconnected: ${socket.id}`);
+    delete onlineUsers[socket.id];
+    io.emit('online_users', Object.values(onlineUsers));
   });
 });
 

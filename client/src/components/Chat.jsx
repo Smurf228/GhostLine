@@ -11,6 +11,23 @@ const Chat = ({ user, onLogout }) => {
   const [activeChannel, setActiveChannel] = useState(null);
   const [messages, setMessages] = useState([]);
   const [typingUser, setTypingUser] = useState('');
+  const [onlineUsers, setOnlineUsers] = useState([]);
+
+  // Регистрируемся в сокете
+  useEffect(() => {
+    socket.emit('user_online', { id: user.id, username: user.username });
+
+    const handleOnlineUsers = (users) => setOnlineUsers(users);
+    socket.on('online_users', handleOnlineUsers);
+
+    return () => {
+      socket.off('online_users', handleOnlineUsers);
+    };
+  }, [user]);
+
+  const handleStatusChange = (status) => {
+    socket.emit('change_status', status);
+  };
 
   // Загрузить каналы
   useEffect(() => {
@@ -103,6 +120,8 @@ const Chat = ({ user, onLogout }) => {
         onSelectChannel={handleSelectChannel}
         onChannelCreated={handleChannelCreated}
         onLogout={onLogout}
+        onlineUsers={onlineUsers}
+        onStatusChange={handleStatusChange}
       />
 
       <div className="chat-area">

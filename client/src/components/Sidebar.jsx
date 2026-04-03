@@ -3,13 +3,15 @@ import axios from 'axios';
 
 const STATUSES = ['ONLINE', 'AWAY', 'GHOST'];
 
-const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout }) => {
+const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange }) => {
   const [newChannel, setNewChannel] = useState('');
   const [statusIndex, setStatusIndex] = useState(0);
   const status = STATUSES[statusIndex];
 
   const handleStatusClick = () => {
-    setStatusIndex((prev) => (prev + 1) % STATUSES.length);
+    const next = (statusIndex + 1) % STATUSES.length;
+    setStatusIndex(next);
+    onStatusChange?.(STATUSES[next]);
   };
 
   const handleCreateChannel = async (e) => {
@@ -60,6 +62,21 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
           onChange={(e) => setNewChannel(e.target.value)}
         />
       </form>
+
+      {onlineUsers.length > 0 && (
+        <>
+          <p className="channels-title">// online [{onlineUsers.length}]</p>
+          <div className="online-list">
+            {onlineUsers.map((u) => (
+              <div key={u.id} className="online-item">
+                <span className={`online-status status-${u.status.toLowerCase()}`}>●</span>
+                <span className="online-name">@{u.username}</span>
+                <span className={`online-badge status-${u.status.toLowerCase()}`}>[{u.status}]</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <button className="logout-btn" onClick={onLogout}>
         $ disconnect

@@ -118,8 +118,33 @@
   border-color: var(--green);
 }
 
-.logout-btn {
-  padding: 10px 16px;
+.online-list {
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.online-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+}
+
+.online-status {
+  font-size: 0.6rem;
+}
+
+.online-name {
+  color: var(--text-dim);
+  flex: 1;
+}
+
+.online-badge {
+  font-size: 0.6rem;
+}
+
+.logout-btn {  padding: 10px 16px;
   border-top: 1px solid var(--border);
   color: var(--red);
   font-family: 'Fira Code', monospace;
