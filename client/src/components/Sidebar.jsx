@@ -3,9 +3,17 @@ import axios from 'axios';
 
 const STATUSES = ['ONLINE', 'AWAY', 'GHOST'];
 
-const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange, unread = {}, onDeleteChannel, isOpen, onClose, onOpenDM, unreadDM = {}, activeDM }) => {
+const Sidebar = ({
+  user, channels, activeChannel, onSelectChannel, onChannelCreated,
+  onLogout, onStatusChange, unread = {}, onDeleteChannel,
+  isOpen, onClose, onOpenDM, unreadDM = {}, activeDM,
+  friends = [], pendingRequests = [], onAcceptRequest, onRejectRequest, onSendFriendRequest
+}) => {
   const [newChannel, setNewChannel] = useState('');
   const [statusIndex, setStatusIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const status = STATUSES[statusIndex];
 
   const handleStatusClick = () => {
@@ -17,7 +25,6 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
   const handleCreateChannel = async (e) => {
     e.preventDefault();
     if (!newChannel.trim()) return;
-
     try {
       const res = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/channels`, {
         name: newChannel.trim().toLowerCase(),
@@ -28,6 +35,28 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
     } catch {
       console.error('Failed to create channel');
     }
+  };
+
+  const handleSearch = async (q) => {
+    setSearchQuery(q);
+    if (q.length < 2) { setSearchResults([]); return; }
+    setSearching(true);
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_SERVER_URL}/api/friends/search`, {
+        params: { q, userId: user.id }
+      });
+      setSearchResults(res.data);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSendRequest = async (targetUserId) => {
+    await onSendFriendRequest(targetUserId);
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   return (
@@ -73,33 +102,80 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
           placeholder="+ new channel"
           value={newChannel}
           onChange={(e) => setNewChannel(e.target.value)}
+          autoComplete="off"
         />
       </form>
 
-      {onlineUsers.length > 0 && (
-        <>
-          <p className="channels-title">// online [{onlineUsers.length}]</p>
-          <div className="online-list">
-            {onlineUsers.map((u) => (
-              <div
-                key={u.id}
-                className={`online-item ${activeDM?.id === u.id ? 'active' : ''}`}
-                onClick={u.id !== user.id ? () => { onOpenDM?.(u); onClose?.(); } : undefined}
-                title={u.id !== user.id ? `DM @${u.username}` : undefined}
-                style={{ cursor: u.id !== user.id ? 'pointer' : 'default' }}
-              >
-                <span className={`online-status status-${u.status.toLowerCase()}`}>●</span>
+      {/* Connections section */}
+      <p className="channels-title">
+        // connections
+        {pendingRequests.length > 0 && (
+          <span className="pending-badge"> [{pendingRequests.length} req]</span>
+        )}
+      </p>
+
+      {/* User search */}
+      <div className="friend-search">
+        <input
+          className="new-channel-input"
+          type="text"
+          placeholder="⌕ find user..."
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.target.value)}
+          autoComplete="off"
+        />
+        {searching && <p className="search-hint">// scanning...</p>}
+        {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
+          <p className="search-hint">// no users found</p>
+        )}
+        {searchResults.length > 0 && (
+          <div className="search-results">
+            {searchResults.map(u => (
+              <div key={u._id} className="search-result-item">
                 <span className="online-name">@{u.username}</span>
-                {u.role === 'admin' && <span className="admin-badge">[ADMIN]</span>}
-                <span className={`online-badge status-${u.status.toLowerCase()}`}>[{u.status}]</span>
-                {u.id !== user.id && unreadDM[u.id] > 0 && (
-                  <span className="unread-badge dm-unread">{unreadDM[u.id]}</span>
-                )}
+                <button className="req-btn" onClick={() => handleSendRequest(u._id)}>[+add]</button>
               </div>
             ))}
           </div>
-        </>
+        )}
+      </div>
+
+      {/* Pending incoming requests */}
+      {pendingRequests.length > 0 && (
+        <div className="pending-requests">
+          {pendingRequests.map(req => (
+            <div key={req._id} className="pending-request-item">
+              <span className="online-name">@{req.sender.username}</span>
+              <span className="req-from"> wants to connect</span>
+              <button className="req-accept-btn" onClick={() => onAcceptRequest(req._id, req.sender)} title="accept">✓</button>
+              <button className="req-reject-btn" onClick={() => onRejectRequest(req._id)} title="reject">✕</button>
+            </div>
+          ))}
+        </div>
       )}
+
+      {/* Friends list */}
+      <div className="online-list">
+        {friends.length === 0 && pendingRequests.length === 0 && (
+          <p className="no-friends">// no connections yet</p>
+        )}
+        {friends.map((f) => (
+          <div
+            key={f._id}
+            className={`online-item ${activeDM?.id === f._id ? 'active' : ''}`}
+            onClick={() => { onOpenDM?.({ id: f._id, username: f.username }); onClose?.(); }}
+            title={`DM @${f.username}`}
+            style={{ cursor: 'pointer' }}
+          >
+            <span className={`online-status status-${f.status.toLowerCase()}`}>●</span>
+            <span className="online-name">@{f.username}</span>
+            <span className={`online-badge status-${f.status.toLowerCase()}`}>[{f.status}]</span>
+            {unreadDM[f._id] > 0 && (
+              <span className="unread-badge dm-unread">{unreadDM[f._id]}</span>
+            )}
+          </div>
+        ))}
+      </div>
 
       <button className="logout-btn" onClick={onLogout}>
         $ disconnect

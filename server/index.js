@@ -8,6 +8,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const channelRoutes = require('./routes/channels');
 const dmRoutes = require('./routes/dm');
+const friendsRoutes = require('./routes/friends');
 const Message = require('./models/Message');
 const DirectMessage = require('./models/DirectMessage');
 const User = require('./models/User');
@@ -27,7 +28,7 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'DELETE']
+  methods: ['GET', 'POST', 'DELETE', 'PUT']
 };
 
 const io = new Server(server, {
@@ -43,7 +44,9 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/channels', channelRoutes);
 app.use('/api/dm', dmRoutes);
+app.use('/api/friends', friendsRoutes);
 channelRoutes.setIo(io);
+friendsRoutes.setIo(io);
 
 // Socket.io
 const onlineUsers = {}; // socketId -> { id, username, status }

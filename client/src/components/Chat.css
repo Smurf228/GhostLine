@@ -364,6 +364,113 @@
   color: #000;
 }
 
+/* Friend system */
+.status-offline {
+  color: #444;
+}
+
+.pending-badge {
+  color: #ff9500;
+  font-size: 0.65rem;
+}
+
+.friend-search {
+  padding: 0 12px 6px;
+}
+
+.search-hint {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  padding: 2px 0;
+  margin: 0;
+}
+
+.search-results {
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  gap: 8px;
+}
+
+.search-result-item:hover {
+  background: rgba(0, 255, 65, 0.05);
+}
+
+.req-btn {
+  background: none;
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-family: inherit;
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.req-btn:hover {
+  background: rgba(0, 255, 65, 0.1);
+}
+
+.pending-requests {
+  padding: 0 12px 6px;
+}
+
+.pending-request-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  font-size: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.req-from {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  flex: 1;
+}
+
+.req-accept-btn {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0 3px;
+  font-family: inherit;
+}
+
+.req-accept-btn:hover {
+  text-shadow: 0 0 6px var(--green);
+}
+
+.req-reject-btn {
+  background: none;
+  border: none;
+  color: #ff4444;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0 3px;
+  font-family: inherit;
+}
+
+.req-reject-btn:hover {
+  text-shadow: 0 0 6px #ff4444;
+}
+
+.no-friends {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  padding: 4px 12px;
+}
+
 .online-item:hover {
   background: rgba(0, 212, 255, 0.06);
   border-radius: 3px;

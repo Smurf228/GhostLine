@@ -19,6 +19,8 @@ const Chat = ({ user, onLogout }) => {
   const [unreadDM, setUnreadDM] = useState({});
   const activeDMRef = useRef(activeDM);
   useEffect(() => { activeDMRef.current = activeDM; }, [activeDM]);
+  const [friends, setFriends] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('ghostline_sound') !== 'off');
   const soundOnRef = useRef(soundOn);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
@@ -62,9 +64,22 @@ const Chat = ({ user, onLogout }) => {
     };
     socket.on('receive_dm', handleDM);
 
+    const handleFriendRequest = (request) => {
+      setPendingRequests(prev => [...prev, request]);
+      playBeep();
+    };
+    socket.on('friend_request', handleFriendRequest);
+
+    const handleFriendAccepted = (newFriend) => {
+      setFriends(prev => [...prev, newFriend]);
+    };
+    socket.on('friend_accepted', handleFriendAccepted);
+
     return () => {
       socket.off('online_users', handleOnlineUsers);
       socket.off('receive_dm', handleDM);
+      socket.off('friend_request', handleFriendRequest);
+      socket.off('friend_accepted', handleFriendAccepted);
     };
   }, [user]);
 
@@ -91,6 +106,19 @@ const Chat = ({ user, onLogout }) => {
     };
     fetchChannels();
   }, []);
+
+  // Загрузить друзей и заявки
+  useEffect(() => {
+    const fetchFriends = async () => {
+      const [friendsRes, pendingRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_SERVER_URL}/api/friends`, { params: { userId: user.id } }),
+        axios.get(`${import.meta.env.VITE_SERVER_URL}/api/friends/pending`, { params: { userId: user.id } })
+      ]);
+      setFriends(friendsRes.data);
+      setPendingRequests(pendingRes.data);
+    };
+    fetchFriends();
+  }, [user.id]);
 
   // Подключение к каналу + загрузка сообщений
   useEffect(() => {
@@ -181,6 +209,36 @@ const Chat = ({ user, onLogout }) => {
     setDmMessages((prev) => prev.map((m) => m._id === msgId ? { ...m, isNew: false } : m));
   };
 
+  const handleSendFriendRequest = async (targetUserId) => {
+    try {
+      await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/friends/request`, {
+        senderId: user.id,
+        receiverId: targetUserId,
+      });
+    } catch (err) {
+      console.error('Friend request failed:', err.response?.data?.message || err.message);
+    }
+  };
+
+  const handleAcceptRequest = async (requestId, sender) => {
+    try {
+      await axios.put(`${import.meta.env.VITE_SERVER_URL}/api/friends/${requestId}/accept`);
+      setPendingRequests(prev => prev.filter(r => r._id !== requestId));
+      setFriends(prev => [...prev, { _id: sender._id, username: sender.username }]);
+    } catch (err) {
+      console.error('Accept failed:', err.response?.data?.message || err.message);
+    }
+  };
+
+  const handleRejectRequest = async (requestId) => {
+    try {
+      await axios.put(`${import.meta.env.VITE_SERVER_URL}/api/friends/${requestId}/reject`);
+      setPendingRequests(prev => prev.filter(r => r._id !== requestId));
+    } catch (err) {
+      console.error('Reject failed:', err.response?.data?.message || err.message);
+    }
+  };
+
   // Загрузить историю DM при открытии
   useEffect(() => {
     if (!activeDM) return;
@@ -225,6 +283,11 @@ const Chat = ({ user, onLogout }) => {
     }
   };
 
+  const friendsWithStatus = friends.map(f => {
+    const online = onlineUsers.find(u => u.id === f._id);
+    return { ...f, status: online ? online.status : 'OFFLINE' };
+  });
+
   return (
     <div className="chat-layout">
       <Sidebar
@@ -234,7 +297,6 @@ const Chat = ({ user, onLogout }) => {
         onSelectChannel={(ch) => { handleSelectChannel(ch); setSidebarOpen(false); }}
         onChannelCreated={handleChannelCreated}
         onLogout={onLogout}
-        onlineUsers={onlineUsers}
         onStatusChange={handleStatusChange}
         unread={unread}
         onDeleteChannel={handleDeleteChannel}
@@ -243,6 +305,11 @@ const Chat = ({ user, onLogout }) => {
         activeDM={activeDM}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        friends={friendsWithStatus}
+        pendingRequests={pendingRequests}
+        onAcceptRequest={handleAcceptRequest}
+        onRejectRequest={handleRejectRequest}
+        onSendFriendRequest={handleSendFriendRequest}
       />
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
