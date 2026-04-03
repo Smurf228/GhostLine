@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import socket from '../socket';
 import Sidebar from './Sidebar';
@@ -14,6 +14,8 @@ const Chat = ({ user, onLogout }) => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [unread, setUnread] = useState({});
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('ghostline_sound') !== 'off');
+  const soundOnRef = useRef(soundOn);
+  useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
 
   // Регистрируемся в сокете
   useEffect(() => {
@@ -28,7 +30,7 @@ const Chat = ({ user, onLogout }) => {
   }, [user]);
 
   const playBeep = () => {
-    if (!soundOn) return;
+    if (!soundOnRef.current) return;
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
