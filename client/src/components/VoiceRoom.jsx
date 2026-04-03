@@ -12,8 +12,9 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
   const [participants, setParticipants] = useState([]);
   const [muted, setMuted] = useState(false);
   const localStreamRef = useRef(null);
-  const peersRef = useRef({});     // socketId -> RTCPeerConnection
-  const audioEls = useRef({});     // socketId -> HTMLAudioElement
+  const peersRef = useRef({});        // socketId -> RTCPeerConnection
+  const audioEls = useRef({});        // socketId -> HTMLAudioElement
+  const iceQueues = useRef({});       // socketId -> candidate[] (queued before remoteDesc)
 
   const addAudio = (socketId, stream) => {
     if (audioEls.current[socketId]) {
@@ -90,6 +91,15 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
         }
       };
 
+      const flushIce = async (socketId) => {
+        const pc = peersRef.current[socketId];
+        const queue = iceQueues.current[socketId] || [];
+        delete iceQueues.current[socketId];
+        for (const c of queue) {
+          try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch { /* ignore */ }
+        }
+      };
+
       const onOffer = async ({ from, offer }) => {
         let pc = peersRef.current[from];
         if (!pc) {
@@ -98,6 +108,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
         }
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
+          await flushIce(from);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           socket.emit('voice_answer', { to: from, answer: pc.localDescription });
@@ -111,6 +122,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
         if (pc) {
           try {
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
+            await flushIce(from);
           } catch (err) {
             console.error('voice_answer handling error:', err);
           }
@@ -118,8 +130,14 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
       };
 
       const onIce = async ({ from, candidate }) => {
+        if (!candidate) return;
         const pc = peersRef.current[from];
-        if (pc && candidate) {
+        if (!pc) return;
+        if (!pc.remoteDescription || !pc.remoteDescription.type) {
+          // Queue until remoteDescription is set
+          if (!iceQueues.current[from]) iceQueues.current[from] = [];
+          iceQueues.current[from].push(candidate);
+        } else {
           try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* ignore */ }
         }
       };
@@ -153,6 +171,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
       socket.off('voice_user_left');
       Object.values(peersRef.current).forEach(pc => pc.close());
       peersRef.current = {};
+      iceQueues.current = {};
       Object.values(audioEls.current).forEach(a => { a.pause(); a.srcObject = null; a.remove(); });
       audioEls.current = {};
       if (localStreamRef.current) {
