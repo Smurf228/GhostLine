@@ -1,31 +1,40 @@
 import { useState, useRef } from 'react';
 import socket from '../socket';
 
-const ChatInput = ({ user, channelId }) => {
+const ChatInput = ({ user, channelId, dmTargetId }) => {
   const [text, setText] = useState('');
   const typingTimeout = useRef(null);
 
   const handleChange = (e) => {
     setText(e.target.value);
-    socket.emit('typing', { channelId, username: user.username });
-
-    clearTimeout(typingTimeout.current);
-    typingTimeout.current = setTimeout(() => {
-      socket.emit('stop_typing', { channelId, username: user.username });
-    }, 1000);
+    if (!dmTargetId) {
+      socket.emit('typing', { channelId, username: user.username });
+      clearTimeout(typingTimeout.current);
+      typingTimeout.current = setTimeout(() => {
+        socket.emit('stop_typing', { channelId, username: user.username });
+      }, 1000);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!text.trim()) return;
 
-    socket.emit('send_message', {
-      text: text.trim(),
-      senderId: user.id,
-      channelId,
-    });
+    if (dmTargetId) {
+      socket.emit('send_dm', {
+        text: text.trim(),
+        senderId: user.id,
+        receiverId: dmTargetId,
+      });
+    } else {
+      socket.emit('send_message', {
+        text: text.trim(),
+        senderId: user.id,
+        channelId,
+      });
+      socket.emit('stop_typing', { channelId, username: user.username });
+    }
 
-    socket.emit('stop_typing', { channelId, username: user.username });
     setText('');
   };
 

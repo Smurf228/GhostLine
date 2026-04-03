@@ -344,6 +344,36 @@
   left: 12px;
 }
 
+/* DM styles */
+.dm-label {
+  color: var(--cyan);
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-left: 4px;
+}
+
+.dm-empty {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.dm-unread {
+  background: var(--cyan);
+  color: #000;
+}
+
+.online-item:hover {
+  background: rgba(0, 212, 255, 0.06);
+  border-radius: 3px;
+}
+
+.online-item.active {
+  background: rgba(0, 212, 255, 0.12);
+  border-radius: 3px;
+}
+
 /* Admin badge */
 .admin-badge {
   color: #ff00ff;

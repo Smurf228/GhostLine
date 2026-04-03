@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const STATUSES = ['ONLINE', 'AWAY', 'GHOST'];
 
-const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange, unread = {}, onDeleteChannel, isOpen, onClose }) => {
+const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange, unread = {}, onDeleteChannel, isOpen, onClose, onOpenDM, unreadDM = {}, activeDM }) => {
   const [newChannel, setNewChannel] = useState('');
   const [statusIndex, setStatusIndex] = useState(0);
   const status = STATUSES[statusIndex];
@@ -81,11 +81,20 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
           <p className="channels-title">// online [{onlineUsers.length}]</p>
           <div className="online-list">
             {onlineUsers.map((u) => (
-              <div key={u.id} className="online-item">
+              <div
+                key={u.id}
+                className={`online-item ${activeDM?.id === u.id ? 'active' : ''}`}
+                onClick={u.id !== user.id ? () => { onOpenDM?.(u); onClose?.(); } : undefined}
+                title={u.id !== user.id ? `DM @${u.username}` : undefined}
+                style={{ cursor: u.id !== user.id ? 'pointer' : 'default' }}
+              >
                 <span className={`online-status status-${u.status.toLowerCase()}`}>●</span>
                 <span className="online-name">@{u.username}</span>
                 {u.role === 'admin' && <span className="admin-badge">[ADMIN]</span>}
                 <span className={`online-badge status-${u.status.toLowerCase()}`}>[{u.status}]</span>
+                {u.id !== user.id && unreadDM[u.id] > 0 && (
+                  <span className="unread-badge dm-unread">{unreadDM[u.id]}</span>
+                )}
               </div>
             ))}
           </div>

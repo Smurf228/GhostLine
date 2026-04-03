@@ -3,6 +3,7 @@ import axios from 'axios';
 import socket from '../socket';
 import Sidebar from './Sidebar';
 import Messages from './Messages';
+import DMPanel from './DMPanel';
 import ChatInput from './ChatInput';
 import './Chat.css';
 
@@ -13,6 +14,11 @@ const Chat = ({ user, onLogout }) => {
   const [typingUser, setTypingUser] = useState('');
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [unread, setUnread] = useState({});
+  const [activeDM, setActiveDM] = useState(null);
+  const [dmMessages, setDmMessages] = useState([]);
+  const [unreadDM, setUnreadDM] = useState({});
+  const activeDMRef = useRef(activeDM);
+  useEffect(() => { activeDMRef.current = activeDM; }, [activeDM]);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('ghostline_sound') !== 'off');
   const soundOnRef = useRef(soundOn);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
@@ -25,8 +31,23 @@ const Chat = ({ user, onLogout }) => {
     const handleOnlineUsers = (users) => setOnlineUsers(users);
     socket.on('online_users', handleOnlineUsers);
 
+    const handleDM = (msg) => {
+      const myId = String(user.id);
+      const senderId = String(msg.sender._id);
+      const partnerId = senderId === myId ? msg.receiverId : senderId;
+
+      if (activeDMRef.current?.id === partnerId) {
+        setDmMessages((prev) => [...prev, { ...msg, isNew: true }]);
+      } else {
+        setUnreadDM((prev) => ({ ...prev, [partnerId]: (prev[partnerId] || 0) + 1 }));
+        playBeep();
+      }
+    };
+    socket.on('receive_dm', handleDM);
+
     return () => {
       socket.off('online_users', handleOnlineUsers);
+      socket.off('receive_dm', handleDM);
     };
   }, [user]);
 
@@ -144,9 +165,33 @@ const Chat = ({ user, onLogout }) => {
 
   const handleSelectChannel = (channel) => {
     setActiveChannel(channel);
+    setActiveDM(null);
     setTypingUser('');
     setUnread((prev) => ({ ...prev, [channel._id]: 0 }));
   };
+
+  const handleOpenDM = (u) => {
+    setActiveDM({ id: u.id, username: u.username });
+    setActiveChannel(null);
+    setUnreadDM((prev) => ({ ...prev, [u.id]: 0 }));
+    setSidebarOpen(false);
+  };
+
+  const handleDMDecrypted = (msgId) => {
+    setDmMessages((prev) => prev.map((m) => m._id === msgId ? { ...m, isNew: false } : m));
+  };
+
+  // Загрузить историю DM при открытии
+  useEffect(() => {
+    if (!activeDM) return;
+    const fetchDMs = async () => {
+      const res = await axios.get(`${import.meta.env.VITE_SERVER_URL}/api/dm`, {
+        params: { userId: user.id, with: activeDM.id }
+      });
+      setDmMessages(res.data);
+    };
+    fetchDMs();
+  }, [activeDM]);
 
   const handleChannelCreated = (channel) => {
     setChannels((prev) => [...prev, channel]);
@@ -193,13 +238,35 @@ const Chat = ({ user, onLogout }) => {
         onStatusChange={handleStatusChange}
         unread={unread}
         onDeleteChannel={handleDeleteChannel}
+        onOpenDM={handleOpenDM}
+        unreadDM={unreadDM}
+        activeDM={activeDM}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       <div className="chat-area">
-        {activeChannel ? (
+        {activeDM ? (
+          <>
+            <div className="chat-header">
+              <button className="menu-btn" onClick={() => setSidebarOpen(true)}>☰</button>
+              <h2>
+                <span className="hash" style={{ color: 'var(--cyan)' }}>@</span>
+                {activeDM.username}
+                <span className="dm-label"> [DM]</span>
+              </h2>
+              <div className="header-right">
+                <button className="sound-btn" onClick={toggleSound} title="toggle sound">
+                  {soundOn ? '[SND:ON]' : '[SND:OFF]'}
+                </button>
+              </div>
+            </div>
+
+            <DMPanel messages={dmMessages} user={user} onMessageDecrypted={handleDMDecrypted} />
+            <ChatInput user={user} dmTargetId={activeDM.id} />
+          </>
+        ) : activeChannel ? (
           <>
             <div className="chat-header">
               <button className="menu-btn" onClick={() => setSidebarOpen(true)}>☰</button>

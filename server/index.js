@@ -7,7 +7,9 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const channelRoutes = require('./routes/channels');
+const dmRoutes = require('./routes/dm');
 const Message = require('./models/Message');
+const DirectMessage = require('./models/DirectMessage');
 const User = require('./models/User');
 
 const app = express();
@@ -40,6 +42,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/channels', channelRoutes);
+app.use('/api/dm', dmRoutes);
 channelRoutes.setIo(io);
 
 // Socket.io
@@ -49,8 +52,9 @@ io.on('connection', (socket) => {
   console.log(`> User connected: ${socket.id}`);
 
   // Пользователь регистрируется
-  socket.on('user_online', ({ id, username }) => {
-    onlineUsers[socket.id] = { id, username, status: 'ONLINE' };
+  socket.on('user_online', ({ id, username, role }) => {
+    onlineUsers[socket.id] = { id, username, status: 'ONLINE', role };
+    socket.join(`user:${id}`);
     io.emit('online_users', Object.values(onlineUsers));
   });
 
@@ -101,6 +105,30 @@ io.on('connection', (socket) => {
 
   socket.on('stop_typing', (data) => {
     socket.to(data.channelId).emit('user_stop_typing', data.username);
+  });
+
+  // Личные сообщения
+  socket.on('send_dm', async ({ text, senderId, receiverId }) => {
+    try {
+      const dm = await DirectMessage.create({ text, sender: senderId, receiver: receiverId });
+      const populated = await dm.populate('sender', 'username');
+
+      const dmData = {
+        _id: populated._id.toString(),
+        text: populated.text,
+        sender: {
+          _id: populated.sender._id.toString(),
+          username: populated.sender.username,
+        },
+        receiverId,
+        createdAt: populated.createdAt,
+      };
+
+      io.to(`user:${receiverId}`).emit('receive_dm', dmData);
+      io.to(`user:${senderId}`).emit('receive_dm', dmData);
+    } catch (err) {
+      console.error('DM error:', err);
+    }
   });
 
   socket.on('disconnect', () => {
