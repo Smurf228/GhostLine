@@ -4,28 +4,19 @@ import socket from '../socket';
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    {
-      urls: 'turn:openrelay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    // metered.ca public demo TURN (more reliable than openrelay)
+    { urls: 'turn:a.relay.metered.ca:80',      username: 'e7b57ef4e6aeed87c77f0d05', credential: 'uqpCR5RlGmf1AXBZ' },
+    { urls: 'turn:a.relay.metered.ca:80?transport=tcp', username: 'e7b57ef4e6aeed87c77f0d05', credential: 'uqpCR5RlGmf1AXBZ' },
+    { urls: 'turn:a.relay.metered.ca:443',     username: 'e7b57ef4e6aeed87c77f0d05', credential: 'uqpCR5RlGmf1AXBZ' },
+    { urls: 'turn:a.relay.metered.ca:443?transport=tcp', username: 'e7b57ef4e6aeed87c77f0d05', credential: 'uqpCR5RlGmf1AXBZ' },
   ]
 };
 
 const VoiceRoom = ({ channelId, user, onLeave }) => {
   const [participants, setParticipants] = useState([]);
   const [muted, setMuted] = useState(false);
+  const [iceState, setIceState] = useState('new');  // for diagnosis
   const localStreamRef = useRef(null);
   const peersRef = useRef({});        // socketId -> RTCPeerConnection
   const audioEls = useRef({});        // socketId -> HTMLAudioElement
@@ -61,6 +52,11 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
 
       pc.oniceconnectionstatechange = () => {
         console.log(`[Voice] ICE ${targetSocketId.slice(0,6)}: ${pc.iceConnectionState}`);
+        setIceState(pc.iceConnectionState);
+      };
+
+      pc.onicegatheringstatechange = () => {
+        console.log(`[Voice] gathering ${targetSocketId.slice(0,6)}: ${pc.iceGatheringState}`);
       };
 
       pc.onconnectionstatechange = () => {
@@ -217,6 +213,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
     <div className="voice-room">
       <div className="voice-left">
         <span className="voice-live">◉ VOICE</span>
+        <span className={`voice-ice-state voice-ice-${iceState}`}>[{iceState}]</span>
         <div className="voice-users">
           {participants.map(p => (
             <span key={p.socketId} className={`voice-chip ${p.socketId === socket.id && muted ? 'voice-muted' : ''}`}>
