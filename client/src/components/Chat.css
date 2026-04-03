@@ -112,6 +112,23 @@
   text-align: center;
 }
 
+.channel-delete-btn {
+  background: none;
+  border: none;
+  color: #ff4444;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.6rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.channel-item:hover .channel-delete-btn {
+  opacity: 1;
+}
+
 .new-channel {
   padding: 12px 16px;
   border-top: 1px solid var(--border);

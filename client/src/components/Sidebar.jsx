@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const STATUSES = ['ONLINE', 'AWAY', 'GHOST'];
 
-const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange, unread = {} }) => {
+const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange, unread = {}, onDeleteChannel }) => {
   const [newChannel, setNewChannel] = useState('');
   const [statusIndex, setStatusIndex] = useState(0);
   const status = STATUSES[statusIndex];
@@ -51,6 +51,13 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
             {ch.name}
             {unread[ch._id] > 0 && (
               <span className="unread-badge">{unread[ch._id]}</span>
+            )}
+            {String(ch.creator) === String(user.id) && (
+              <button
+                className="channel-delete-btn"
+                onClick={(e) => { e.stopPropagation(); onDeleteChannel(ch._id); }}
+                title="delete channel"
+              >[x]</button>
             )}
           </div>
         ))}

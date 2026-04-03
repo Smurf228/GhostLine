@@ -67,5 +67,24 @@ router.delete('/messages/:id', async (req, res) => {
   }
 });
 
+// DELETE /api/channels/:id — удалить канал (только создатель)
+router.delete('/:id', async (req, res) => {
+  try {
+    const channel = await Channel.findById(req.params.id);
+    if (!channel) return res.status(404).json({ message: 'Channel not found' });
+
+    if (channel.creator.toString() !== req.body.userId) {
+      return res.status(403).json({ message: 'Not your channel' });
+    }
+
+    await Message.deleteMany({ channel: req.params.id });
+    await channel.deleteOne();
+    if (_io) _io.emit('channel_deleted', req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
 module.exports.setIo = setIo;

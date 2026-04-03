@@ -114,11 +114,21 @@ const Chat = ({ user, onLogout }) => {
     socket.on('user_stop_typing', handleStopTyping);
     socket.on('message_deleted', handleMessageDeleted);
 
+    const handleChannelDeleted = (channelId) => {
+      setChannels((prev) => prev.filter((c) => c._id !== channelId));
+      setActiveChannel((prev) => {
+        if (prev?._id === channelId) return null;
+        return prev;
+      });
+    };
+    socket.on('channel_deleted', handleChannelDeleted);
+
     return () => {
       socket.off('receive_message', handleMessage);
       socket.off('user_typing', handleTyping);
       socket.off('user_stop_typing', handleStopTyping);
       socket.off('message_deleted', handleMessageDeleted);
+      socket.off('channel_deleted', handleChannelDeleted);
     };
   }, [activeChannel]);
 
@@ -131,6 +141,17 @@ const Chat = ({ user, onLogout }) => {
   const handleChannelCreated = (channel) => {
     setChannels((prev) => [...prev, channel]);
     setActiveChannel(channel);
+  };
+
+  const handleDeleteChannel = async (channelId) => {
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_SERVER_URL}/api/channels/${channelId}`,
+        { data: { userId: user.id } }
+      );
+    } catch (err) {
+      console.error('Failed to delete channel:', err.response?.data?.message || err.message);
+    }
   };
 
   const handleDelete = async (messageId) => {
@@ -157,6 +178,7 @@ const Chat = ({ user, onLogout }) => {
         onlineUsers={onlineUsers}
         onStatusChange={handleStatusChange}
         unread={unread}
+        onDeleteChannel={handleDeleteChannel}
       />
 
       <div className="chat-area">
