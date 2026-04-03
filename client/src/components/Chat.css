@@ -242,6 +242,83 @@
   color: var(--green);
 }
 
+/* Voice button (header) */
+.voice-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s, text-shadow 0.2s;
+}
+.voice-btn:hover { color: var(--green); }
+
+/* Voice room bar */
+.voice-room {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 16px;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+  background: rgba(0, 255, 65, 0.04);
+  flex-shrink: 0;
+}
+.voice-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.voice-live {
+  color: var(--green);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  text-shadow: 0 0 6px var(--green);
+  animation: voice-pulse 2s ease-in-out infinite;
+}
+@keyframes voice-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.voice-users {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.voice-chip {
+  color: var(--cyan);
+  font-size: 0.68rem;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  padding: 1px 6px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.voice-chip.voice-muted {
+  color: var(--text-dim);
+  border-color: rgba(0, 212, 255, 0.15);
+}
+.voice-controls {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.voice-ctrl-btn {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.68rem;
+  cursor: pointer;
+  padding: 0;
+  transition: text-shadow 0.2s;
+}
+.voice-ctrl-btn:hover { text-shadow: 0 0 6px var(--green); }
+.voice-ctrl-btn.voice-leave { color: #ff4444; }
+.voice-ctrl-btn.voice-leave:hover { text-shadow: 0 0 6px #ff4444; }
+
 .typing-indicator {
   color: var(--magenta);
   font-size: 0.7rem;

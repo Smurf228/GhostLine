@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import Messages from './Messages';
 import DMPanel from './DMPanel';
 import ChatInput from './ChatInput';
+import VoiceRoom from './VoiceRoom';
 import './Chat.css';
 
 const Chat = ({ user, onLogout }) => {
@@ -26,6 +27,7 @@ const Chat = ({ user, onLogout }) => {
   const soundOnRef = useRef(soundOn);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [inVoice, setInVoice] = useState(false);
 
   const playBeep = () => {
     if (!soundOnRef.current) return;
@@ -206,6 +208,7 @@ const Chat = ({ user, onLogout }) => {
   const handleSelectChannel = (channel) => {
     setActiveChannel(channel);
     setActiveDM(null);
+    setInVoice(false);
     setTypingUser('');
     setUnread((prev) => ({ ...prev, [channel._id]: 0 }));
   };
@@ -397,12 +400,22 @@ const Chat = ({ user, onLogout }) => {
                     @{typingUser} is decrypting...
                   </span>
                 )}
+                <button className="voice-btn" onClick={() => setInVoice(v => !v)}>
+                  {inVoice ? '[IN VOICE]' : '[VOICE]'}
+                </button>
                 <button className="sound-btn" onClick={toggleSound} title="toggle sound">
                   {soundOn ? '[SND:ON]' : '[SND:OFF]'}
                 </button>
               </div>
             </div>
 
+            {inVoice && (
+              <VoiceRoom
+                channelId={activeChannel._id}
+                user={user}
+                onLeave={() => setInVoice(false)}
+              />
+            )}
             <Messages messages={messages} user={user} onDelete={handleDelete} onMessageDecrypted={handleMessageDecrypted} />
             <ChatInput user={user} channelId={activeChannel._id} />
           </>

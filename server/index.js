@@ -53,6 +53,7 @@ channelInvitesRoutes.setIo(io);
 
 // Socket.io
 const onlineUsers = {}; // socketId -> { id, username, status }
+const voiceRooms = {};  // channelId -> [{ socketId, userId, username }]
 
 io.on('connection', (socket) => {
   console.log(`> User connected: ${socket.id}`);
@@ -137,8 +138,47 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Голосовые звонки (сигналинг WebRTC)
+  socket.on('join_voice', ({ channelId, userId, username }) => {
+    if (!voiceRooms[channelId]) voiceRooms[channelId] = [];
+    // Отправить новому участнику список уже находящихся в комнате
+    socket.emit('voice_participants', voiceRooms[channelId]);
+    // Уведомить остальных о новом участнике
+    socket.to(channelId).emit('voice_user_joined', { socketId: socket.id, userId, username });
+    voiceRooms[channelId].push({ socketId: socket.id, userId, username });
+  });
+
+  socket.on('leave_voice', ({ channelId }) => {
+    if (voiceRooms[channelId]) {
+      voiceRooms[channelId] = voiceRooms[channelId].filter(p => p.socketId !== socket.id);
+      if (voiceRooms[channelId].length === 0) delete voiceRooms[channelId];
+    }
+    socket.to(channelId).emit('voice_user_left', { socketId: socket.id });
+  });
+
+  socket.on('voice_offer', ({ to, offer }) => {
+    socket.to(to).emit('voice_offer', { from: socket.id, offer });
+  });
+
+  socket.on('voice_answer', ({ to, answer }) => {
+    socket.to(to).emit('voice_answer', { from: socket.id, answer });
+  });
+
+  socket.on('voice_ice', ({ to, candidate }) => {
+    socket.to(to).emit('voice_ice', { from: socket.id, candidate });
+  });
+
   socket.on('disconnect', () => {
     console.log(`> User disconnected: ${socket.id}`);
+    // Очистить голосовые комнаты
+    Object.entries(voiceRooms).forEach(([channelId, participants]) => {
+      const before = participants.length;
+      voiceRooms[channelId] = participants.filter(p => p.socketId !== socket.id);
+      if (voiceRooms[channelId].length === 0) delete voiceRooms[channelId];
+      else if (voiceRooms[channelId].length < before) {
+        socket.to(channelId).emit('voice_user_left', { socketId: socket.id });
+      }
+    });
     delete onlineUsers[socket.id];
     io.emit('online_users', Object.values(onlineUsers));
   });
