@@ -19,11 +19,14 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
     if (audioEls.current[socketId]) {
       audioEls.current[socketId].pause();
       audioEls.current[socketId].srcObject = null;
+      audioEls.current[socketId].remove();
     }
-    const audio = new Audio();
+    const audio = document.createElement('audio');
     audio.srcObject = stream;
     audio.autoplay = true;
-    audio.play().catch(() => {});
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+    audio.play().catch(console.error);
     audioEls.current[socketId] = audio;
   };
 
@@ -38,8 +41,13 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
         if (candidate) socket.emit('voice_ice', { to: targetSocketId, candidate });
       };
 
-      pc.ontrack = ({ streams }) => {
-        addAudio(targetSocketId, streams[0]);
+      pc.ontrack = ({ track, streams }) => {
+        if (streams && streams[0]) {
+          addAudio(targetSocketId, streams[0]);
+        } else {
+          const ms = new MediaStream([track]);
+          addAudio(targetSocketId, ms);
+        }
       };
 
       return pc;
@@ -145,7 +153,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
       socket.off('voice_user_left');
       Object.values(peersRef.current).forEach(pc => pc.close());
       peersRef.current = {};
-      Object.values(audioEls.current).forEach(a => { a.pause(); a.srcObject = null; });
+      Object.values(audioEls.current).forEach(a => { a.pause(); a.srcObject = null; a.remove(); });
       audioEls.current = {};
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(t => t.stop());
