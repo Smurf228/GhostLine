@@ -193,7 +193,14 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
       socket.on('voice_ice', onIce);
       socket.on('voice_user_left', onUserLeft);
 
+      // DEBUG: log all incoming socket events (remove after fix)
+      const onAny = (event, ...args) => {
+        if (event.startsWith('voice_')) console.log('[Voice] RAW event:', event, JSON.stringify(args).slice(0, 80));
+      };
+      socket.onAny(onAny);
+
       socket.emit('join_voice', { channelId, userId: user.id, username: user.username });
+      console.log('[Voice] join_voice emitted, my socketId:', socket.id);
     };
 
     init();
@@ -207,6 +214,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
       socket.off('voice_answer');
       socket.off('voice_ice');
       socket.off('voice_user_left');
+      socket.offAny();
       Object.values(peersRef.current).forEach(pc => pc.close());
       peersRef.current = {};
       iceQueues.current = {};

@@ -157,15 +157,17 @@ io.on('connection', (socket) => {
   });
 
   socket.on('voice_offer', ({ to, offer }) => {
-    socket.to(to).emit('voice_offer', { from: socket.id, offer });
+    console.log(`[voice] offer relay ${socket.id.slice(0,6)} -> ${to.slice(0,6)}`);
+    io.to(to).emit('voice_offer', { from: socket.id, offer });
   });
 
   socket.on('voice_answer', ({ to, answer }) => {
-    socket.to(to).emit('voice_answer', { from: socket.id, answer });
+    console.log(`[voice] answer relay ${socket.id.slice(0,6)} -> ${to.slice(0,6)}`);
+    io.to(to).emit('voice_answer', { from: socket.id, answer });
   });
 
   socket.on('voice_ice', ({ to, candidate }) => {
-    socket.to(to).emit('voice_ice', { from: socket.id, candidate });
+    io.to(to).emit('voice_ice', { from: socket.id, candidate });
   });
 
   socket.on('disconnect', () => {
