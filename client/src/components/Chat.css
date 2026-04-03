@@ -421,4 +421,21 @@
   .menu-btn {
     display: block;
   }
+
+  .chat-area {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chat-header {
+    padding: 8px 12px;
+  }
+
+  .header-right {
+    gap: 6px;
+  }
+
+  .typing-indicator {
+    display: none;
+  }
 }

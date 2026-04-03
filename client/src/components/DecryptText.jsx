@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 const glitchChars = 'アイウエオカキクケコ!@#$%^&*01';
 
-const DecryptText = ({ text }) => {
+const DecryptText = ({ text, onDone }) => {
   const [display, setDisplay] = useState(() => {
     let result = '';
     for (let i = 0; i < text.length; i++) {
@@ -34,6 +34,7 @@ const DecryptText = ({ text }) => {
 
       if (stepRef.current >= totalSteps) {
         clearInterval(intervalRef.current);
+        onDone?.();
       }
     }, 150);
 

@@ -28,7 +28,7 @@ const renderText = (text, currentUsername) => {
   });
 };
 
-const Messages = ({ messages, user, onDelete }) => {
+const Messages = ({ messages, user, onDelete, onMessageDecrypted }) => {
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ const Messages = ({ messages, user, onDelete }) => {
           <span className="msg-user" style={{ color: userColor }}>@{username}</span>
           <span className="msg-text">
             {msg.isNew
-              ? <DecryptText text={msg.text} />
+              ? <DecryptText text={msg.text} onDone={() => onMessageDecrypted?.(msg._id)} />
               : renderText(msg.text, user?.username)
             }
           </span>

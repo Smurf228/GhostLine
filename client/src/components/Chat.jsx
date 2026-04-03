@@ -155,6 +155,10 @@ const Chat = ({ user, onLogout }) => {
     }
   };
 
+  const handleMessageDecrypted = (messageId) => {
+    setMessages((prev) => prev.map((m) => m._id === messageId ? { ...m, isNew: false } : m));
+  };
+
   const handleDelete = async (messageId) => {
     try {
       await axios.delete(
@@ -206,7 +210,7 @@ const Chat = ({ user, onLogout }) => {
               </div>
             </div>
 
-            <Messages messages={messages} user={user} onDelete={handleDelete} />
+            <Messages messages={messages} user={user} onDelete={handleDelete} onMessageDecrypted={handleMessageDecrypted} />
             <ChatInput user={user} channelId={activeChannel._id} />
           </>
         ) : (
