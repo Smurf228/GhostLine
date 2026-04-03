@@ -124,12 +124,21 @@ const Chat = ({ user, onLogout }) => {
     };
     socket.on('channel_deleted', handleChannelDeleted);
 
+    const handleChannelCreatedRemote = (channel) => {
+      setChannels((prev) => {
+        if (prev.find((c) => c._id === channel._id)) return prev;
+        return [...prev, channel];
+      });
+    };
+    socket.on('channel_created', handleChannelCreatedRemote);
+
     return () => {
       socket.off('receive_message', handleMessage);
       socket.off('user_typing', handleTyping);
       socket.off('user_stop_typing', handleStopTyping);
       socket.off('message_deleted', handleMessageDeleted);
       socket.off('channel_deleted', handleChannelDeleted);
+      socket.off('channel_created', handleChannelCreatedRemote);
     };
   }, [activeChannel]);
 
@@ -215,6 +224,7 @@ const Chat = ({ user, onLogout }) => {
           </>
         ) : (
           <div className="no-channel">
+            <button className="menu-btn menu-btn-nochannel" onClick={() => setSidebarOpen(true)}>☰</button>
             <p>// create or select a channel to start</p>
           </div>
         )}

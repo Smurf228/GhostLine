@@ -328,11 +328,20 @@
 
 .no-channel {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   flex: 1;
   color: var(--text-dim);
   font-size: 0.85rem;
+  position: relative;
+}
+
+.menu-btn-nochannel {
+  display: none;
+  position: absolute;
+  top: 12px;
+  left: 12px;
 }
 
 /* Admin badge */
@@ -419,6 +428,10 @@
   }
 
   .menu-btn {
+    display: block;
+  }
+
+  .menu-btn-nochannel {
     display: block;
   }
 

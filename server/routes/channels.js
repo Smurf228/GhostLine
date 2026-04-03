@@ -27,6 +27,7 @@ router.post('/', async (req, res) => {
     }
 
     const channel = await Channel.create({ name, creator });
+    if (_io) _io.emit('channel_created', channel);
     res.status(201).json(channel);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
