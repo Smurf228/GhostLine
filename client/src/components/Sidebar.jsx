@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const STATUSES = ['ONLINE', 'AWAY', 'GHOST'];
 
-const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange, unread = {}, onDeleteChannel }) => {
+const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange, unread = {}, onDeleteChannel, isOpen, onClose }) => {
   const [newChannel, setNewChannel] = useState('');
   const [statusIndex, setStatusIndex] = useState(0);
   const status = STATUSES[statusIndex];
@@ -31,10 +31,13 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
   };
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
       <div className="sidebar-header">
-        <h1>GHOSTLINE</h1>
-        <p className="user-info">@{user.username}</p>
+        <div className="sidebar-header-top">
+          <h1>GHOSTLINE</h1>
+          <button className="sidebar-close-btn" onClick={onClose}>✕</button>
+        </div>
+        <p className="user-info">@{user.username}{user.role === 'admin' && <span className="admin-badge"> [ADMIN]</span>}</p>
         <p className={`user-status status-${status.toLowerCase()}`} onClick={handleStatusClick} title="click to change">[{status}]</p>
       </div>
 
@@ -81,6 +84,7 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
               <div key={u.id} className="online-item">
                 <span className={`online-status status-${u.status.toLowerCase()}`}>●</span>
                 <span className="online-name">@{u.username}</span>
+                {u.role === 'admin' && <span className="admin-badge">[ADMIN]</span>}
                 <span className={`online-badge status-${u.status.toLowerCase()}`}>[{u.status}]</span>
               </div>
             ))}

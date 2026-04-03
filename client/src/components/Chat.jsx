@@ -16,10 +16,11 @@ const Chat = ({ user, onLogout }) => {
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('ghostline_sound') !== 'off');
   const soundOnRef = useRef(soundOn);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Регистрируемся в сокете
   useEffect(() => {
-    socket.emit('user_online', { id: user.id, username: user.username });
+    socket.emit('user_online', { id: user.id, username: user.username, role: user.role });
 
     const handleOnlineUsers = (users) => setOnlineUsers(users);
     socket.on('online_users', handleOnlineUsers);
@@ -172,19 +173,23 @@ const Chat = ({ user, onLogout }) => {
         user={user}
         channels={channels}
         activeChannel={activeChannel}
-        onSelectChannel={handleSelectChannel}
+        onSelectChannel={(ch) => { handleSelectChannel(ch); setSidebarOpen(false); }}
         onChannelCreated={handleChannelCreated}
         onLogout={onLogout}
         onlineUsers={onlineUsers}
         onStatusChange={handleStatusChange}
         unread={unread}
         onDeleteChannel={handleDeleteChannel}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       <div className="chat-area">
         {activeChannel ? (
           <>
             <div className="chat-header">
+              <button className="menu-btn" onClick={() => setSidebarOpen(true)}>☰</button>
               <h2>
                 <span className="hash">#</span>
                 {activeChannel.name}

@@ -334,3 +334,91 @@
   color: var(--text-dim);
   font-size: 0.85rem;
 }
+
+/* Admin badge */
+.admin-badge {
+  color: #ff00ff;
+  font-size: 0.6rem;
+  text-shadow: 0 0 6px #ff00ff;
+}
+
+/* Mentions */
+.mention {
+  color: var(--cyan);
+  font-weight: bold;
+}
+
+.mention-me {
+  color: #ffdd00;
+  text-shadow: 0 0 6px #ffdd00;
+  background: rgba(255, 221, 0, 0.08);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Sidebar header top */
+.sidebar-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1rem;
+  cursor: pointer;
+  display: none;
+  padding: 0;
+}
+
+/* Mobile menu button */
+.menu-btn {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 10px;
+  display: none;
+}
+
+/* Sidebar overlay */
+.sidebar-overlay {
+  display: none;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    height: 100vh;
+    z-index: 100;
+    transition: left 0.25s ease;
+    width: 260px;
+  }
+
+  .sidebar.sidebar-open {
+    left: 0;
+  }
+
+  .sidebar-close-btn {
+    display: block;
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+
+  .menu-btn {
+    display: block;
+  }
+}

@@ -14,6 +14,20 @@ const getUserColor = (username) => {
   return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
 };
 
+const renderText = (text, currentUsername) => {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('@')) {
+      const mentioned = part.slice(1);
+      const isMe = mentioned.toLowerCase() === currentUsername?.toLowerCase();
+      return (
+        <span key={i} className={isMe ? 'mention mention-me' : 'mention'}>{part}</span>
+      );
+    }
+    return part;
+  });
+};
+
 const Messages = ({ messages, user, onDelete }) => {
   const bottomRef = useRef(null);
 
@@ -44,7 +58,10 @@ const Messages = ({ messages, user, onDelete }) => {
           <span className="msg-prefix">&gt;</span>
           <span className="msg-user" style={{ color: userColor }}>@{username}</span>
           <span className="msg-text">
-            {msg.isNew ? <DecryptText text={msg.text} /> : msg.text}
+            {msg.isNew
+              ? <DecryptText text={msg.text} />
+              : renderText(msg.text, user?.username)
+            }
           </span>
           <span className="msg-time">{formatTime(msg.createdAt)}</span>
           {canDelete && (
