@@ -20,6 +20,8 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
   const peersRef = useRef({});        // socketId -> RTCPeerConnection
   const audioEls = useRef({});        // socketId -> HTMLAudioElement
   const iceQueues = useRef({});       // socketId -> candidate[] (queued before remoteDesc)
+  const onLeaveRef = useRef(onLeave);
+  useEffect(() => { onLeaveRef.current = onLeave; }, [onLeave]);
 
   const addAudio = (socketId, stream) => {
     if (audioEls.current[socketId]) {
@@ -82,7 +84,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       } catch {
         alert('// MICROPHONE ACCESS DENIED');
-        onLeave();
+        onLeaveRef.current();
         return;
       }
 
@@ -158,6 +160,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
 
       const onIce = async ({ from, candidate }) => {
         if (!candidate) return;
+        console.log('[Voice] voice_ice received from', from.slice(0,6));
         const pc = peersRef.current[from];
         if (!pc) {
           console.log('[Voice] onIce: no peer for', from.slice(0,6), '— queueing');
@@ -214,7 +217,7 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
         localStreamRef.current = null;
       }
     };
-  }, [channelId, user.id, user.username, onLeave]);
+  }, [channelId, user.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleMute = () => {
     if (localStreamRef.current) {
