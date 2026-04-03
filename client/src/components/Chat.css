@@ -36,6 +36,27 @@
 .sidebar-header .user-status {
   color: var(--cyan);
   font-size: 0.65rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.sidebar-header .user-status:hover {
+  opacity: 0.7;
+}
+
+.sidebar-header .status-online {
+  color: var(--green);
+  text-shadow: 0 0 6px var(--green);
+}
+
+.sidebar-header .status-away {
+  color: #ffaa00;
+  text-shadow: 0 0 6px #ffaa00;
+}
+
+.sidebar-header .status-ghost {
+  color: var(--text-dim);
+  text-shadow: none;
 }
 
 .channels-title {

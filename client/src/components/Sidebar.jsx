@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import axios from 'axios';
 
+const STATUSES = ['ONLINE', 'AWAY', 'GHOST'];
+
 const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout }) => {
   const [newChannel, setNewChannel] = useState('');
+  const [statusIndex, setStatusIndex] = useState(0);
+  const status = STATUSES[statusIndex];
+
+  const handleStatusClick = () => {
+    setStatusIndex((prev) => (prev + 1) % STATUSES.length);
+  };
 
   const handleCreateChannel = async (e) => {
     e.preventDefault();
@@ -25,7 +33,7 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
       <div className="sidebar-header">
         <h1>GHOSTLINE</h1>
         <p className="user-info">@{user.username}</p>
-        <p className="user-status">[ONLINE]</p>
+        <p className={`user-status status-${status.toLowerCase()}`} onClick={handleStatusClick} title="click to change">[{status}]</p>
       </div>
 
       <p className="channels-title">// channels</p>
