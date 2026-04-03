@@ -24,6 +24,23 @@ const Chat = ({ user, onLogout }) => {
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const playBeep = () => {
+    if (!soundOnRef.current) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.1);
+    } catch { /* audio not supported */ }
+  };
+
   // Регистрируемся в сокете
   useEffect(() => {
     socket.emit('user_online', { id: user.id, username: user.username, role: user.role });
@@ -50,23 +67,6 @@ const Chat = ({ user, onLogout }) => {
       socket.off('receive_dm', handleDM);
     };
   }, [user]);
-
-  const playBeep = () => {
-    if (!soundOnRef.current) return;
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      osc.type = 'square';
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.1);
-    } catch {}
-  };
 
   const handleStatusChange = (status) => {
     socket.emit('change_status', status);
@@ -191,7 +191,7 @@ const Chat = ({ user, onLogout }) => {
       setDmMessages(res.data);
     };
     fetchDMs();
-  }, [activeDM]);
+  }, [activeDM, user.id]);
 
   const handleChannelCreated = (channel) => {
     setChannels((prev) => [...prev, channel]);
