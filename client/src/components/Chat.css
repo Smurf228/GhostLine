@@ -203,6 +203,27 @@
   margin-right: 4px;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sound-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.sound-btn:hover {
+  color: var(--green);
+}
+
 .typing-indicator {
   color: var(--magenta);
   font-size: 0.7rem;

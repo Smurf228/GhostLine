@@ -13,6 +13,7 @@ const Chat = ({ user, onLogout }) => {
   const [typingUser, setTypingUser] = useState('');
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [unread, setUnread] = useState({});
+  const [soundOn, setSoundOn] = useState(() => localStorage.getItem('ghostline_sound') !== 'off');
 
   // Регистрируемся в сокете
   useEffect(() => {
@@ -27,6 +28,7 @@ const Chat = ({ user, onLogout }) => {
   }, [user]);
 
   const playBeep = () => {
+    if (!soundOn) return;
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -44,6 +46,14 @@ const Chat = ({ user, onLogout }) => {
 
   const handleStatusChange = (status) => {
     socket.emit('change_status', status);
+  };
+
+  const toggleSound = () => {
+    setSoundOn((prev) => {
+      const next = !prev;
+      localStorage.setItem('ghostline_sound', next ? 'on' : 'off');
+      return next;
+    });
   };
 
   // Загрузить каналы
@@ -155,11 +165,16 @@ const Chat = ({ user, onLogout }) => {
                 <span className="hash">#</span>
                 {activeChannel.name}
               </h2>
-              {typingUser && (
-                <span className="typing-indicator">
-                  @{typingUser} is decrypting...
-                </span>
-              )}
+              <div className="header-right">
+                {typingUser && (
+                  <span className="typing-indicator">
+                    @{typingUser} is decrypting...
+                  </span>
+                )}
+                <button className="sound-btn" onClick={toggleSound} title="toggle sound">
+                  {soundOn ? '[SND:ON]' : '[SND:OFF]'}
+                </button>
+              </div>
             </div>
 
             <Messages messages={messages} user={user} onDelete={handleDelete} />
