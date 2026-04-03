@@ -1,6 +1,19 @@
 import { useEffect, useRef } from 'react';
 import DecryptText from './DecryptText';
 
+const USER_COLORS = [
+  '#00ff41', '#00d4ff', '#ff00ff', '#ff9500', '#ff4444',
+  '#a8ff00', '#00ffcc', '#ff0099', '#ffdd00', '#7b00ff'
+];
+
+const getUserColor = (username) => {
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
+};
+
 const Messages = ({ messages, user, onDelete }) => {
   const bottomRef = useRef(null);
 
@@ -22,11 +35,12 @@ const Messages = ({ messages, user, onDelete }) => {
         const senderId = String(msg.sender?._id);
         const userId = String(user?.id);
         const isOwn = senderId === userId;
-        if (i === 0) console.log('[GhostLine] senderId:', senderId, 'userId:', userId, 'isOwn:', isOwn);
+        const username = msg.sender?.username || 'unknown';
+        const userColor = getUserColor(username);
         return (
         <div className="message" key={msg._id || i}>
           <span className="msg-prefix">&gt;</span>
-          <span className="msg-user">@{msg.sender?.username || 'unknown'}</span>
+          <span className="msg-user" style={{ color: userColor }}>@{username}</span>
           <span className="msg-text">
             {msg.isNew ? <DecryptText text={msg.text} /> : msg.text}
           </span>

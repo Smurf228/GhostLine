@@ -26,6 +26,22 @@ const Chat = ({ user, onLogout }) => {
     };
   }, [user]);
 
+  const playBeep = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.1);
+    } catch {}
+  };
+
   const handleStatusChange = (status) => {
     socket.emit('change_status', status);
   };
@@ -62,8 +78,10 @@ const Chat = ({ user, onLogout }) => {
     const handleMessage = (message) => {
       if (message.channel === activeChannel?._id) {
         setMessages((prev) => [...prev, { ...message, isNew: true }]);
+        playBeep();
       } else {
         setUnread((prev) => ({ ...prev, [message.channel]: (prev[message.channel] || 0) + 1 }));
+        playBeep();
       }
     };
 
