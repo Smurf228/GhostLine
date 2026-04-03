@@ -53,7 +53,11 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Already a member' });
     }
 
-    const invite = await ChannelInvite.create({ channel: channelId, sender: senderId, receiver: receiverId });
+    const invite = await ChannelInvite.findOneAndUpdate(
+      { channel: channelId, receiver: receiverId },
+      { sender: senderId, status: 'pending' },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
     const populated = await invite.populate(['channel', 'sender']);
 
     if (_io) {
@@ -66,8 +70,7 @@ router.post('/', async (req, res) => {
     }
 
     res.status(201).json({ message: 'Invite sent' });
-  } catch (err) {
-    if (err.code === 11000) return res.status(400).json({ message: 'Already invited' });
+  } catch {
     res.status(500).json({ message: 'Server error' });
   }
 });
