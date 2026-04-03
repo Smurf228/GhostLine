@@ -5,11 +5,10 @@ const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
-    // metered.ca public demo TURN (more reliable than openrelay)
-    { urls: 'turn:a.relay.metered.ca:80',      username: 'e7b57ef4e6aeed87c77f0d05', credential: 'uqpCR5RlGmf1AXBZ' },
-    { urls: 'turn:a.relay.metered.ca:80?transport=tcp', username: 'e7b57ef4e6aeed87c77f0d05', credential: 'uqpCR5RlGmf1AXBZ' },
-    { urls: 'turn:a.relay.metered.ca:443',     username: 'e7b57ef4e6aeed87c77f0d05', credential: 'uqpCR5RlGmf1AXBZ' },
-    { urls: 'turn:a.relay.metered.ca:443?transport=tcp', username: 'e7b57ef4e6aeed87c77f0d05', credential: 'uqpCR5RlGmf1AXBZ' },
+    // публичный TURN (без регистрации)
+    { urls: 'turn:numb.viagenie.ca', username: 'webrtc@live.com', credential: 'muazkh' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
   ]
 };
 
@@ -47,7 +46,12 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
       localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
       pc.onicecandidate = ({ candidate }) => {
-        if (candidate) socket.emit('voice_ice', { to: targetSocketId, candidate });
+        if (candidate) {
+          console.log(`[Voice] candidate gathered for ${targetSocketId.slice(0,6)}: ${candidate.type} ${candidate.protocol}`);
+          socket.emit('voice_ice', { to: targetSocketId, candidate });
+        } else {
+          console.log(`[Voice] gathering done for ${targetSocketId.slice(0,6)}`);
+        }
       };
 
       pc.oniceconnectionstatechange = () => {
@@ -100,13 +104,11 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
       };
 
       const onUserJoined = ({ socketId, username }) => {
+        console.log('[Voice] voice_user_joined:', username, socketId.slice(0,6));
         setParticipants(prev =>
           prev.find(p => p.socketId === socketId) ? prev : [...prev, { socketId, username }]
         );
-        // Новый участник сам пришлёт нам offer, мы просто готовим peer
-        if (!peersRef.current[socketId]) {
-          peersRef.current[socketId] = makePeer(socketId, stream);
-        }
+        // НЕ создаём peer заранее — создадим когда придёт offer
       };
 
       const flushIce = async (socketId) => {
@@ -122,18 +124,23 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
         console.log('[Voice] voice_offer from', from.slice(0,6));
         let pc = peersRef.current[from];
         if (!pc) {
+          console.log('[Voice] creating fresh peer for', from.slice(0,6));
           pc = makePeer(from, stream);
           peersRef.current[from] = pc;
+        } else {
+          console.log('[Voice] reusing existing peer for', from.slice(0,6));
         }
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
+          console.log('[Voice] remoteDescription set for', from.slice(0,6));
           await flushIce(from);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
+          console.log('[Voice] localDescription set (answer) for', from.slice(0,6));
           socket.emit('voice_answer', { to: from, answer: pc.localDescription });
           console.log('[Voice] voice_answer sent to', from.slice(0,6));
         } catch (err) {
-          console.error('voice_offer handling error:', err);
+          console.error('[Voice] onOffer error:', err);
         }
       };
 
@@ -152,13 +159,21 @@ const VoiceRoom = ({ channelId, user, onLeave }) => {
       const onIce = async ({ from, candidate }) => {
         if (!candidate) return;
         const pc = peersRef.current[from];
-        if (!pc) return;
+        if (!pc) {
+          console.log('[Voice] onIce: no peer for', from.slice(0,6), '— queueing');
+          if (!iceQueues.current[from]) iceQueues.current[from] = [];
+          iceQueues.current[from].push(candidate);
+          return;
+        }
         if (!pc.remoteDescription || !pc.remoteDescription.type) {
-          // Queue until remoteDescription is set
           if (!iceQueues.current[from]) iceQueues.current[from] = [];
           iceQueues.current[from].push(candidate);
         } else {
-          try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch { /* ignore */ }
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (e) {
+            console.warn('[Voice] addIceCandidate failed:', e.message);
+          }
         }
       };
 
