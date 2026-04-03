@@ -80,6 +80,8 @@
   font-size: 0.8rem;
   border-radius: 2px;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
 }
 
 .channel-item:hover {
@@ -96,6 +98,18 @@
 .channel-item .hash {
   color: var(--cyan);
   margin-right: 6px;
+}
+
+.unread-badge {
+  margin-left: auto;
+  background: var(--green);
+  color: #000;
+  font-size: 0.6rem;
+  font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 8px;
+  min-width: 16px;
+  text-align: center;
 }
 
 .new-channel {

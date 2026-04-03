@@ -12,6 +12,7 @@ const Chat = ({ user, onLogout }) => {
   const [messages, setMessages] = useState([]);
   const [typingUser, setTypingUser] = useState('');
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [unread, setUnread] = useState({});
 
   // Регистрируемся в сокете
   useEffect(() => {
@@ -61,6 +62,8 @@ const Chat = ({ user, onLogout }) => {
     const handleMessage = (message) => {
       if (message.channel === activeChannel?._id) {
         setMessages((prev) => [...prev, { ...message, isNew: true }]);
+      } else {
+        setUnread((prev) => ({ ...prev, [message.channel]: (prev[message.channel] || 0) + 1 }));
       }
     };
 
@@ -92,6 +95,7 @@ const Chat = ({ user, onLogout }) => {
   const handleSelectChannel = (channel) => {
     setActiveChannel(channel);
     setTypingUser('');
+    setUnread((prev) => ({ ...prev, [channel._id]: 0 }));
   };
 
   const handleChannelCreated = (channel) => {
@@ -122,6 +126,7 @@ const Chat = ({ user, onLogout }) => {
         onLogout={onLogout}
         onlineUsers={onlineUsers}
         onStatusChange={handleStatusChange}
+        unread={unread}
       />
 
       <div className="chat-area">

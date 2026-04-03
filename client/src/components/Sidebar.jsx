@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const STATUSES = ['ONLINE', 'AWAY', 'GHOST'];
 
-const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange }) => {
+const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCreated, onLogout, onlineUsers = [], onStatusChange, unread = {} }) => {
   const [newChannel, setNewChannel] = useState('');
   const [statusIndex, setStatusIndex] = useState(0);
   const status = STATUSES[statusIndex];
@@ -49,6 +49,9 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
           >
             <span className="hash">#</span>
             {ch.name}
+            {unread[ch._id] > 0 && (
+              <span className="unread-badge">{unread[ch._id]}</span>
+            )}
           </div>
         ))}
       </div>
