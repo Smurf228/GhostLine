@@ -54,7 +54,10 @@ router.delete('/messages/:id', async (req, res) => {
     const senderId = message.sender.toString();
     const userId = req.body.userId;
 
-    if (senderId !== userId) {
+    const requestingUser = await require('../models/User').findById(userId).select('role');
+    const isAdmin = requestingUser?.role === 'admin';
+
+    if (senderId !== userId && !isAdmin) {
       return res.status(403).json({ message: 'Not your message' });
     }
 
@@ -67,13 +70,16 @@ router.delete('/messages/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/channels/:id — удалить канал (только создатель)
+// DELETE /api/channels/:id — удалить канал (создатель или админ)
 router.delete('/:id', async (req, res) => {
   try {
     const channel = await Channel.findById(req.params.id);
     if (!channel) return res.status(404).json({ message: 'Channel not found' });
 
-    if (channel.creator.toString() !== req.body.userId) {
+    const requestingUser = await require('../models/User').findById(req.body.userId).select('role');
+    const isAdmin = requestingUser?.role === 'admin';
+
+    if (channel.creator.toString() !== req.body.userId && !isAdmin) {
       return res.status(403).json({ message: 'Not your channel' });
     }
 

@@ -52,7 +52,7 @@ const Sidebar = ({ user, channels, activeChannel, onSelectChannel, onChannelCrea
             {unread[ch._id] > 0 && (
               <span className="unread-badge">{unread[ch._id]}</span>
             )}
-            {String(ch.creator) === String(user.id) && (
+            {(String(ch.creator) === String(user.id) || user.role === 'admin') && (
               <button
                 className="channel-delete-btn"
                 onClick={(e) => { e.stopPropagation(); onDeleteChannel(ch._id); }}

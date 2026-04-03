@@ -17,6 +17,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['ONLINE', 'AWAY', 'GHOST'],
     default: 'ONLINE'
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
   }
 }, { timestamps: true });
 

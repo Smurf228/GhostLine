@@ -35,6 +35,8 @@ const Messages = ({ messages, user, onDelete }) => {
         const senderId = String(msg.sender?._id);
         const userId = String(user?.id);
         const isOwn = senderId === userId;
+        const isAdmin = user?.role === 'admin';
+        const canDelete = isOwn || isAdmin;
         const username = msg.sender?.username || 'unknown';
         const userColor = getUserColor(username);
         return (
@@ -45,7 +47,7 @@ const Messages = ({ messages, user, onDelete }) => {
             {msg.isNew ? <DecryptText text={msg.text} /> : msg.text}
           </span>
           <span className="msg-time">{formatTime(msg.createdAt)}</span>
-          {isOwn && (
+          {canDelete && (
             <button className="msg-delete" onClick={() => onDelete(msg._id)} title="delete">
               [x]
             </button>
