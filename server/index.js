@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const channelRoutes = require('./routes/channels');
 const dmRoutes = require('./routes/dm');
 const friendsRoutes = require('./routes/friends');
+const channelInvitesRoutes = require('./routes/channelInvites');
 const Message = require('./models/Message');
 const DirectMessage = require('./models/DirectMessage');
 const User = require('./models/User');
@@ -45,8 +46,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/channels', channelRoutes);
 app.use('/api/dm', dmRoutes);
 app.use('/api/friends', friendsRoutes);
+app.use('/api/channel-invites', channelInvitesRoutes);
 channelRoutes.setIo(io);
 friendsRoutes.setIo(io);
+channelInvitesRoutes.setIo(io);
 
 // Socket.io
 const onlineUsers = {}; // socketId -> { id, username, status }

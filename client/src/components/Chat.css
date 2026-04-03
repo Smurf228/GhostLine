@@ -82,6 +82,7 @@
   transition: all 0.2s;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .channel-item:hover {
@@ -469,6 +470,64 @@
   color: var(--text-dim);
   font-size: 0.75rem;
   padding: 4px 12px;
+}
+
+/* Channel invite */
+.channel-invites-list {
+  padding: 0 12px 4px;
+}
+
+.channel-invite-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 0;
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.ch-inv-text {
+  flex: 1;
+  color: var(--green);
+}
+
+.channel-invite-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.channel-item:hover .channel-invite-btn {
+  opacity: 1;
+}
+
+.invite-dropdown {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  background: rgba(10, 10, 10, 0.98);
+  border: 1px solid var(--green);
+  z-index: 200;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.invite-dropdown-item {
+  padding: 5px 10px;
+  color: var(--green);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.invite-dropdown-item:hover {
+  background: rgba(0, 255, 65, 0.1);
 }
 
 .online-item:hover {

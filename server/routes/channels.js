@@ -6,17 +6,18 @@ const Message = require('../models/Message');
 let _io;
 const setIo = (io) => { _io = io; };
 
-// GET /api/channels — получить все каналы
+// GET /api/channels — получить каналы пользователя
 router.get('/', async (req, res) => {
   try {
-    const channels = await Channel.find();
+    const { userId } = req.query;
+    const channels = await Channel.find({ members: userId });
     res.json(channels);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// POST /api/channels — создать канал
+// POST /api/channels — создать канал (только создатель видит)
 router.post('/', async (req, res) => {
   try {
     const { name, creator } = req.body;
@@ -26,8 +27,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Channel already exists' });
     }
 
-    const channel = await Channel.create({ name, creator });
-    if (_io) _io.emit('channel_created', channel);
+    const channel = await Channel.create({ name, creator, members: [creator] });
+    // channel_created только создателю, не всем
+    if (_io) _io.to(`user:${creator}`).emit('channel_created', channel);
     res.status(201).json(channel);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

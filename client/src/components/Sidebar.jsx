@@ -7,13 +7,15 @@ const Sidebar = ({
   user, channels, activeChannel, onSelectChannel, onChannelCreated,
   onLogout, onStatusChange, unread = {}, onDeleteChannel,
   isOpen, onClose, onOpenDM, unreadDM = {}, activeDM,
-  friends = [], pendingRequests = [], onAcceptRequest, onRejectRequest, onSendFriendRequest
+  friends = [], pendingRequests = [], onAcceptRequest, onRejectRequest, onSendFriendRequest,
+  channelInvites = [], onAcceptChannelInvite, onRejectChannelInvite, onSendChannelInvite
 }) => {
   const [newChannel, setNewChannel] = useState('');
   const [statusIndex, setStatusIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [inviteOpenFor, setInviteOpenFor] = useState(null); // channelId
   const status = STATUSES[statusIndex];
 
   const handleStatusClick = () => {
@@ -72,6 +74,22 @@ const Sidebar = ({
 
       <p className="channels-title">// channels</p>
 
+      {/* Входящие приглашения в каналы */}
+      {channelInvites.length > 0 && (
+        <div className="channel-invites-list">
+          {channelInvites.map(inv => (
+            <div key={inv._id} className="channel-invite-item">
+              <span className="ch-inv-text">
+                <span className="hash">#</span>{inv.channel.name}
+                <span className="req-from"> from @{inv.sender.username}</span>
+              </span>
+              <button className="req-accept-btn" onClick={() => onAcceptChannelInvite(inv._id)} title="join">✓</button>
+              <button className="req-reject-btn" onClick={() => onRejectChannelInvite(inv._id)} title="decline">✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="channel-list">
         {channels.map((ch) => (
           <div
@@ -91,6 +109,26 @@ const Sidebar = ({
                 title="delete channel"
               >[x]</button>
             )}
+            {/* Invite button — for any member */}
+            <button
+              className="channel-invite-btn"
+              title="invite friend"
+              onClick={(e) => { e.stopPropagation(); setInviteOpenFor(inviteOpenFor === ch._id ? null : ch._id); }}
+            >[+]</button>
+            {inviteOpenFor === ch._id && friends.length > 0 && (
+              <div className="invite-dropdown">
+                {friends.map(f => (
+                  <div
+                    key={f._id}
+                    className="invite-dropdown-item"
+                    onClick={(e) => { e.stopPropagation(); onSendChannelInvite(ch._id, f._id); setInviteOpenFor(null); }}
+                  >@{f.username}</div>
+                ))}
+              </div>
+            )}
+            {inviteOpenFor === ch._id && friends.length === 0 && (
+              <div className="invite-dropdown"><div className="invite-dropdown-item" style={{color:'var(--text-dim)'}}>no friends yet</div></div>
+            )}
           </div>
         ))}
       </div>
@@ -109,8 +147,8 @@ const Sidebar = ({
       {/* Connections section */}
       <p className="channels-title">
         // connections
-        {pendingRequests.length > 0 && (
-          <span className="pending-badge"> [{pendingRequests.length} req]</span>
+        {(pendingRequests.length + channelInvites.length) > 0 && (
+          <span className="pending-badge"> [{pendingRequests.length + channelInvites.length} req]</span>
         )}
       </p>
 

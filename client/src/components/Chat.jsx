@@ -21,6 +21,7 @@ const Chat = ({ user, onLogout }) => {
   useEffect(() => { activeDMRef.current = activeDM; }, [activeDM]);
   const [friends, setFriends] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [channelInvites, setChannelInvites] = useState([]);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('ghostline_sound') !== 'off');
   const soundOnRef = useRef(soundOn);
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
@@ -75,11 +76,18 @@ const Chat = ({ user, onLogout }) => {
     };
     socket.on('friend_accepted', handleFriendAccepted);
 
+    const handleChannelInvite = (invite) => {
+      setChannelInvites(prev => [...prev, invite]);
+      playBeep();
+    };
+    socket.on('channel_invite', handleChannelInvite);
+
     return () => {
       socket.off('online_users', handleOnlineUsers);
       socket.off('receive_dm', handleDM);
       socket.off('friend_request', handleFriendRequest);
       socket.off('friend_accepted', handleFriendAccepted);
+      socket.off('channel_invite', handleChannelInvite);
     };
   }, [user]);
 
@@ -98,26 +106,30 @@ const Chat = ({ user, onLogout }) => {
   // Загрузить каналы
   useEffect(() => {
     const fetchChannels = async () => {
-      const res = await axios.get(`${import.meta.env.VITE_SERVER_URL}/api/channels`);
+      const res = await axios.get(`${import.meta.env.VITE_SERVER_URL}/api/channels`, {
+        params: { userId: user.id }
+      });
       setChannels(res.data);
       if (res.data.length > 0) {
         setActiveChannel(res.data[0]);
       }
     };
     fetchChannels();
-  }, []);
+  }, [user.id]);
 
-  // Загрузить друзей и заявки
+  // Загрузить друзей, заявки, приглашения в каналы
   useEffect(() => {
-    const fetchFriends = async () => {
-      const [friendsRes, pendingRes] = await Promise.all([
+    const fetchFriendsAndInvites = async () => {
+      const [friendsRes, pendingRes, chanInvRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_SERVER_URL}/api/friends`, { params: { userId: user.id } }),
-        axios.get(`${import.meta.env.VITE_SERVER_URL}/api/friends/pending`, { params: { userId: user.id } })
+        axios.get(`${import.meta.env.VITE_SERVER_URL}/api/friends/pending`, { params: { userId: user.id } }),
+        axios.get(`${import.meta.env.VITE_SERVER_URL}/api/channel-invites/pending`, { params: { userId: user.id } })
       ]);
       setFriends(friendsRes.data);
       setPendingRequests(pendingRes.data);
+      setChannelInvites(chanInvRes.data);
     };
-    fetchFriends();
+    fetchFriendsAndInvites();
   }, [user.id]);
 
   // Подключение к каналу + загрузка сообщений
@@ -239,6 +251,40 @@ const Chat = ({ user, onLogout }) => {
     }
   };
 
+  const handleSendChannelInvite = async (channelId, receiverId) => {
+    try {
+      await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/channel-invites`, {
+        channelId,
+        senderId: user.id,
+        receiverId
+      });
+    } catch (err) {
+      console.error('Channel invite failed:', err.response?.data?.message || err.message);
+    }
+  };
+
+  const handleAcceptChannelInvite = async (inviteId) => {
+    try {
+      const res = await axios.put(`${import.meta.env.VITE_SERVER_URL}/api/channel-invites/${inviteId}/accept`);
+      setChannelInvites(prev => prev.filter(i => i._id !== inviteId));
+      setChannels(prev => {
+        if (prev.find(c => c._id === res.data._id)) return prev;
+        return [...prev, res.data];
+      });
+    } catch (err) {
+      console.error('Accept channel invite failed:', err.response?.data?.message || err.message);
+    }
+  };
+
+  const handleRejectChannelInvite = async (inviteId) => {
+    try {
+      await axios.put(`${import.meta.env.VITE_SERVER_URL}/api/channel-invites/${inviteId}/reject`);
+      setChannelInvites(prev => prev.filter(i => i._id !== inviteId));
+    } catch (err) {
+      console.error('Reject channel invite failed:', err.response?.data?.message || err.message);
+    }
+  };
+
   // Загрузить историю DM при открытии
   useEffect(() => {
     if (!activeDM) return;
@@ -310,6 +356,10 @@ const Chat = ({ user, onLogout }) => {
         onAcceptRequest={handleAcceptRequest}
         onRejectRequest={handleRejectRequest}
         onSendFriendRequest={handleSendFriendRequest}
+        channelInvites={channelInvites}
+        onAcceptChannelInvite={handleAcceptChannelInvite}
+        onRejectChannelInvite={handleRejectChannelInvite}
+        onSendChannelInvite={handleSendChannelInvite}
       />
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
