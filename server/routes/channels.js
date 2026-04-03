@@ -3,6 +3,9 @@ const router = express.Router();
 const Channel = require('../models/Channel');
 const Message = require('../models/Message');
 
+let _io;
+const setIo = (io) => { _io = io; };
+
 // GET /api/channels — получить все каналы
 router.get('/', async (req, res) => {
   try {
@@ -55,7 +58,9 @@ router.delete('/messages/:id', async (req, res) => {
       return res.status(403).json({ message: 'Not your message' });
     }
 
+    const channelId = message.channel.toString();
     await message.deleteOne();
+    if (_io) _io.to(channelId).emit('message_deleted', req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -63,3 +68,4 @@ router.delete('/messages/:id', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.setIo = setIo;

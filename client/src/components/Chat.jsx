@@ -55,14 +55,20 @@ const Chat = ({ user, onLogout }) => {
       setTypingUser('');
     };
 
+    const handleMessageDeleted = (messageId) => {
+      setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
+    };
+
     socket.on('receive_message', handleMessage);
     socket.on('user_typing', handleTyping);
     socket.on('user_stop_typing', handleStopTyping);
+    socket.on('message_deleted', handleMessageDeleted);
 
     return () => {
       socket.off('receive_message', handleMessage);
       socket.off('user_typing', handleTyping);
       socket.off('user_stop_typing', handleStopTyping);
+      socket.off('message_deleted', handleMessageDeleted);
     };
   }, [activeChannel]);
 

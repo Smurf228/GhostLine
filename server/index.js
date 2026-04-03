@@ -40,6 +40,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/channels', channelRoutes);
+channelRoutes.setIo(io);
 
 // Socket.io
 io.on('connection', (socket) => {
